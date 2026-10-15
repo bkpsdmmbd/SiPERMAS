@@ -1,0 +1,1638 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Sistem Pengaduan Permasalahan ASN (SIPERMAS ASN)</title>
+    
+    <!-- Bootstrap 5 CSS -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
+    <!-- Font Awesome Icons -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.2/css/all.min.css">
+    <!-- Google Fonts Inter -->
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <!-- SweetAlert2 -->
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+    <!-- html2pdf -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
+
+    <style>
+        :root {
+            --gov-blue: #0f3875;
+            --gov-blue-light: #1d529f;
+            --gov-accent: #d97706;
+            --gov-bg: #f8fafc;
+            --gov-card-border: #e2e8f0;
+        }
+
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: var(--gov-bg);
+            color: #1e293b;
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+        }
+
+        .navbar-gov {
+            background: linear-gradient(135deg, var(--gov-blue) 0%, var(--gov-blue-light) 100%);
+            box-shadow: 0 4px 12px rgba(15, 56, 117, 0.15);
+        }
+
+        .badge-asn {
+            background-color: rgba(255, 255, 255, 0.2);
+            color: #ffffff;
+            font-size: 0.75rem;
+            padding: 0.35rem 0.65rem;
+            border-radius: 20px;
+        }
+
+        .card-gov {
+            border: 1px solid var(--gov-card-border);
+            border-radius: 12px;
+            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05), 0 2px 4px -1px rgba(0, 0, 0, 0.03);
+            background: #ffffff;
+            transition: all 0.2s ease-in-out;
+        }
+
+        .card-header-gov {
+            background-color: #ffffff;
+            border-bottom: 1px solid var(--gov-card-border);
+            padding: 1.25rem 1.5rem;
+            font-weight: 600;
+            color: var(--gov-blue);
+        }
+
+        .nav-pills .nav-link {
+            color: #475569;
+            font-weight: 500;
+            border-radius: 8px;
+            padding: 0.6rem 1.2rem;
+            transition: all 0.2s;
+        }
+
+        .nav-pills .nav-link.active {
+            background-color: var(--gov-blue);
+            color: #ffffff;
+            box-shadow: 0 2px 6px rgba(15, 56, 117, 0.3);
+        }
+
+        .timeline-steps {
+            display: flex;
+            justify-content: space-between;
+            position: relative;
+            margin: 2rem 0;
+        }
+
+        .timeline-steps::before {
+            content: "";
+            position: absolute;
+            top: 20px;
+            left: 10%;
+            right: 10%;
+            height: 3px;
+            background-color: #cbd5e1;
+            z-index: 1;
+        }
+
+        .timeline-step {
+            position: relative;
+            z-index: 2;
+            text-align: center;
+            background: #ffffff;
+            padding: 0 10px;
+            flex: 1;
+        }
+
+        .timeline-icon {
+            width: 42px;
+            height: 42px;
+            border-radius: 50%;
+            background-color: #cbd5e1;
+            color: #ffffff;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin: 0 auto 10px auto;
+            font-size: 1.1rem;
+            transition: all 0.3s ease;
+        }
+
+        .timeline-step.completed .timeline-icon {
+            background-color: #10b981;
+            box-shadow: 0 0 0 4px rgba(16, 185, 129, 0.2);
+        }
+
+        .timeline-step.active .timeline-icon {
+            background-color: var(--gov-blue);
+            box-shadow: 0 0 0 4px rgba(15, 56, 117, 0.2);
+        }
+
+        .badge-status {
+            padding: 0.45em 0.85em;
+            font-weight: 600;
+            font-size: 0.78rem;
+            border-radius: 6px;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        .badge-status-menunggu { background-color: #fef3c7; color: #92400e; border: 1px solid #fde68a; }
+        .badge-status-diproses { background-color: #e0f2fe; color: #075985; border: 1px solid #bae6fd; }
+        .badge-status-selesai { background-color: #d1fae5; color: #065f46; border: 1px solid #a7f3d0; }
+        .badge-status-ditolak { background-color: #fee2e2; color: #991b1b; border: 1px solid #fecaca; }
+
+        #printableReceipt {
+            background: #ffffff;
+            border: 2px dashed #cbd5e1;
+            border-radius: 12px;
+            padding: 2.5rem;
+        }
+
+        .sync-badge {
+            font-size: 0.75rem;
+            border-radius: 20px;
+            padding: 0.25rem 0.65rem;
+        }
+    </style>
+</head>
+<body>
+
+    <nav class="navbar navbar-expand-lg navbar-dark navbar-gov sticky-top py-3">
+        <div class="container">
+            <a class="navbar-brand d-flex align-items-center gap-2" href="#" onclick="switchTab('form-tab')">
+                <img src="https://commons.wikimedia.org/wiki/Special:FilePath/Lambang_Kabupaten_Maluku_Barat_Daya.png" 
+                     alt="Logo Kabupaten Maluku Barat Daya" 
+                     height="48" 
+                     referrerpolicy="no-referrer"
+                     style="object-fit: contain; filter: drop-shadow(0px 2px 4px rgba(0,0,0,0.3));" 
+                     onerror="this.onerror=null; this.src='https://upload.wikimedia.org/wikipedia/commons/e/e9/Lambang_Kabupaten_Maluku_Barat_Daya.png';">
+                <div class="d-flex flex-column">
+                    <span class="lh-1 fw-bold">SIPERMAS ASN</span>
+                    <span class="badge-asn mt-1 text-center" style="font-size: 0.65rem;">Kab. Maluku Barat Daya</span>
+                </div>
+            </a>
+            <button class="navbar-toggler border-0" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav">
+                <span class="navbar-toggler-icon"></span>
+            </button>
+            <div class="collapse navbar-collapse mt-3 mt-lg-0" id="navbarNav">
+                <ul class="nav nav-pills ms-auto flex-column flex-lg-row gap-1 gap-lg-2" id="mainTab" role="tablist">
+                    <li class="nav-item d-flex align-items-center me-2">
+                        <span id="gasSyncStatusBadge" class="badge bg-secondary sync-badge text-white" title="Status koneksi Google Sheets">
+                            <i class="fa-solid fa-circle-notch fa-spin me-1"></i> Memeriksa Server...
+                        </span>
+                    </li>
+                    <li class="nav-item">
+                        <button class="nav-link active w-100 text-start text-lg-center" id="form-tab" onclick="switchTab('form-tab')">
+                            <i class="fa-solid fa-pen-to-square me-1"></i> Buat Pengaduan
+                        </button>
+                    </li>
+                    <li class="nav-item">
+                        <button class="nav-link w-100 text-start text-lg-center" id="status-tab" onclick="switchTab('status-tab')">
+                            <i class="fa-solid fa-magnifying-glass me-1"></i> Cek Status Tiket
+                        </button>
+                    </li>
+                    <li class="nav-item">
+                        <button class="nav-link w-100 text-start text-lg-center" id="admin-tab" onclick="tryOpenAdminTab('admin-tab')">
+                            <i class="fa-solid fa-user-gear me-1"></i> Dashboard Admin
+                        </button>
+                    </li>
+                </ul>
+            </div>
+        </div>
+    </nav>
+
+    <main class="container my-4 my-md-5 flex-grow-1">
+
+        <div class="tab-pane-custom" id="pane-form">
+            <div class="row justify-content-center">
+                <div class="col-lg-10 col-xl-9">
+                    
+                    <div class="card card-gov mb-4 overflow-hidden">
+                        <div class="card-body p-4 p-md-5 text-white" style="background: linear-gradient(135deg, #0f3875 0%, #1d529f 100%);">
+                            <div class="row align-items-center">
+                                <div class="col-md-8">
+                                    <span class="badge bg-warning text-dark mb-2 fw-semibold"><i class="fa-solid fa-shield-halved me-1"></i> Portal Pengaduan Resmi ASN</span>
+                                    <h2 class="fw-bold mb-2">SISTEM PENGADUAN PERMASALAHAN ASN</h2>
+                                    <p class="mb-0 text-white-50 opacity-90">
+                                        Silakan isi formulir pengaduan dengan data yang benar dan lengkap. Data otomatis tersimpan secara real-time ke Google Sheets dan Anda akan menerima bukti pengaduan via Email/WhatsApp.
+                                    </p>
+                                </div>
+                                <div class="col-md-4 d-none d-md-block text-center opacity-75">
+                                    <i class="fa-solid fa-file-signature display-1"></i>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="card card-gov">
+                        <div class="card-header-gov d-flex align-items-center justify-content-between">
+                            <span><i class="fa-solid fa-clipboard-list me-2"></i>Formulir Pengajuan Permasalahan</span>
+                            <span class="badge bg-light text-dark border"><i class="fa-solid fa-clock me-1"></i>(WIT)</span>
+                        </div>
+                        <div class="card-body p-4">
+                            <form id="formPengaduan" onsubmit="handleFormSubmit(event)" novalidate>
+                                <div class="row g-3">
+                                    <div class="col-md-6">
+                                        <label for="nama" class="form-label fw-semibold">Nama Lengkap <span class="text-danger">*</span></label>
+                                        <div class="input-group">
+                                            <span class="input-group-text bg-light"><i class="fa-solid fa-user text-muted"></i></span>
+                                            <input type="text" class="form-control" id="nama" placeholder="Contoh: Bobby Van Jan." required>
+                                        </div>
+                                    </div>
+
+                                    <div class="col-md-6">
+                                        <label for="nip" class="form-label fw-semibold">NIP (Nomor Induk Pegawai) <span class="text-danger">*</span></label>
+                                        <div class="input-group">
+                                            <span class="input-group-text bg-light"><i class="fa-solid fa-id-card text-muted"></i></span>
+                                            <input type="text" class="form-control" id="nip" placeholder="18 Digit Angka NIP" maxlength="25" required>
+                                        </div>
+                                    </div>
+
+                                    <div class="col-md-6">
+                                        <label for="unitKerja" class="form-label fw-semibold">Unit Kerja / Instansi <span class="text-danger">*</span></label>
+                                        <div class="input-group">
+                                            <span class="input-group-text bg-light"><i class="fa-solid fa-sitemap text-muted"></i></span>
+                                            <input type="text" class="form-control" id="unitKerja" placeholder="Contoh: BKPSDM" required>
+                                        </div>
+                                    </div>
+
+                                    <div class="col-md-6">
+                                        <label for="noHp" class="form-label fw-semibold">No. HP (WhatsApp) <span class="text-danger">*</span></label>
+                                        <div class="input-group">
+                                            <span class="input-group-text bg-light"><i class="fa-brands fa-whatsapp text-success"></i></span>
+                                            <input type="tel" class="form-control" id="noHp" placeholder="081234567890" required>
+                                        </div>
+                                    </div>
+
+                                    <div class="col-md-12">
+                                        <label for="email" class="form-label fw-semibold">Email Aktif <span class="text-danger">*</span></label>
+                                        <div class="input-group">
+                                            <span class="input-group-text bg-light"><i class="fa-solid fa-envelope text-muted"></i></span>
+                                            <input type="email" class="form-control" id="email" placeholder="nama.pegawai@instansi.go.id" required>
+                                        </div>
+                                    </div>
+
+                                    <div class="col-md-12">
+                                        <label for="permasalahan" class="form-label fw-semibold">Rincian Permasalahan ASN <span class="text-danger">*</span></label>
+                                        <textarea class="form-control" id="permasalahan" rows="5" placeholder="Jelaskan kronologi, kendala teknis/kepegawaian secara rinci..." required></textarea>
+                                        <div class="form-text">Jelaskan permasalahan secara lengkap (minimal 10 karakter).</div>
+                                    </div>
+
+                                    <div class="col-md-12">
+                                        <label for="dokumen" class="form-label fw-semibold">Dokumen Pendukung <span class="text-muted fw-normal">(Opsional)</span></label>
+                                        <input type="file" class="form-control" id="dokumen" accept=".pdf,.jpg,.jpeg,.png,.doc,.docx">
+                                        <div class="form-text">Format: PDF, JPG, PNG, DOC, DOCX (Maksimal 5 MB).</div>
+                                    </div>
+
+                                    <div class="col-md-6">
+                                        <label class="form-label fw-semibold text-muted">Tanggal Otomatis (WIT)</label>
+                                        <input type="text" class="form-control bg-light" id="autoTanggal" readonly>
+                                    </div>
+                                    <div class="col-md-6">
+                                        <label class="form-label fw-semibold text-muted">Jam Otomatis (WIT)</label>
+                                        <input type="text" class="form-control bg-light" id="autoJam" readonly>
+                                    </div>
+                                </div>
+
+                                <hr class="my-4">
+
+                                <div class="d-flex justify-content-end gap-2">
+                                    <button type="reset" class="btn btn-outline-secondary px-4">
+                                        <i class="fa-solid fa-rotate-left me-1"></i> Reset
+                                    </button>
+                                    <button type="submit" class="btn btn-primary px-5 fw-semibold" id="btnSubmitForm" style="background-color: var(--gov-blue);">
+                                        <i class="fa-solid fa-paper-plane me-1" id="iconSubmitBtn"></i> <span id="textSubmitBtn">Kirim Pengaduan</span>
+                                    </button>
+                                </div>
+                            </form>
+                        </div>
+                    </div>
+
+                </div>
+            </div>
+        </div>
+
+        <div class="tab-pane-custom d-none" id="pane-sukses">
+            <div class="row justify-content-center">
+                <div class="col-lg-8">
+                    <div class="text-center mb-4">
+                        <div class="display-4 text-success mb-2"><i class="fa-solid fa-circle-check"></i></div>
+                        <h3 class="fw-bold">Pengaduan Berhasil Dikirim!</h3>
+                        <p class="text-muted">Bukti pengaduan telah diterbitkan dan tersimpan di Google Sheets. Simpan nomor tiket Anda untuk memantau status penanganan.</p>
+                    </div>
+
+                    <div id="printableReceiptContainer">
+                        <div id="printableReceipt">
+                            <div class="d-flex justify-content-between align-items-center border-bottom pb-3 mb-4">
+                                <div class="d-flex align-items-center gap-3">
+                                    <img src="https://commons.wikimedia.org/wiki/Special:FilePath/Lambang_Kabupaten_Maluku_Barat_Daya.png" 
+                                         alt="Logo Kab. MBD" 
+                                         height="55" 
+                                         referrerpolicy="no-referrer"
+                                         style="object-fit: contain;"
+                                         onerror="this.onerror=null; this.src='https://upload.wikimedia.org/wikipedia/commons/e/e9/Lambang_Kabupaten_Maluku_Barat_Daya.png';">
+                                    <div>
+                                        <h5 class="fw-bold mb-0 text-primary" style="color: var(--gov-blue) !important;">BUKTI PENGADUAN PERMASALAHAN ASN</h5>
+                                        <small class="text-muted">Pemerintah Kabupaten Maluku Barat Daya</small>
+                                    </div>
+                                </div>
+                                <div class="text-end">
+                                    <span class="badge badge-status badge-status-menunggu" id="receiptStatus">MENUNGGU</span>
+                                </div>
+                            </div>
+
+                            <div class="bg-light p-3 rounded-3 mb-4 text-center border">
+                                <span class="text-muted small d-block">NOMOR TIKET PENGADUAN</span>
+                                <span class="fs-3 fw-bold text-dark font-monospace" id="receiptTicket">-</span>
+                            </div>
+
+                            <div class="row g-3">
+                                <div class="col-sm-6"><span class="text-muted small d-block">Nama Pelapor:</span><strong id="receiptNama" class="text-dark">-</strong></div>
+                                <div class="col-sm-6"><span class="text-muted small d-block">NIP:</span><strong id="receiptNip" class="text-dark">-</strong></div>
+                                <div class="col-sm-6"><span class="text-muted small d-block">Unit Kerja:</span><strong id="receiptUnitKerja" class="text-dark">-</strong></div>
+                                <div class="col-sm-6"><span class="text-muted small d-block">No. WhatsApp / HP:</span><strong id="receiptNoHp" class="text-dark">-</strong></div>
+                                <div class="col-sm-6"><span class="text-muted small d-block">Tanggal Pengaduan:</span><strong id="receiptTanggal" class="text-dark">-</strong></div>
+                                <div class="col-sm-6"><span class="text-muted small d-block">Jam Pengaduan (WIT):</span><strong id="receiptJam" class="text-dark">-</strong></div>
+                                <div class="col-12 border-top pt-3 mt-3">
+                                    <span class="text-muted small d-block">Rincian Permasalahan:</span>
+                                    <p class="mb-0 text-dark bg-white p-3 rounded border" id="receiptPermasalahan" style="white-space: pre-wrap;">-</p>
+                                </div>
+                                <div class="col-12 d-none" id="receiptDokumenRow">
+                                    <span class="text-muted small d-block">Dokumen Pendukung:</span>
+                                    <button type="button" id="receiptDokumenBtn" class="btn btn-sm btn-outline-primary mt-1" onclick="openSupportDocument('receipt')">
+                                        <i class="fa-solid fa-arrow-up-right-from-square me-1"></i> Buka Dokumen Pendukung
+                                    </button>
+                                </div>
+                            </div>
+
+                            <div class="mt-4 pt-3 border-top text-center text-muted small">
+                                Tanggal dicetak: <span id="receiptPrintTimestamp">-</span> • Sistem Pengaduan ASN
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="d-flex flex-wrap justify-content-center gap-2 mt-4">
+                        <button class="btn btn-outline-dark" onclick="window.print()"><i class="fa-solid fa-print me-1"></i> Cetak Bukti</button>
+                        <button class="btn btn-danger" onclick="downloadReceiptPDF()"><i class="fa-solid fa-file-pdf me-1"></i> Download PDF</button>
+                        <button class="btn btn-primary" onclick="trackCurrentTicketFromReceipt()"><i class="fa-solid fa-magnifying-glass me-1"></i> Lacak Status Pengaduan</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="tab-pane-custom d-none" id="pane-status">
+            <div class="row justify-content-center">
+                <div class="col-lg-8">
+                    <div class="card card-gov mb-4">
+                        <div class="card-header-gov"><i class="fa-solid fa-magnifying-glass me-2"></i>Cek Status Pengaduan ASN Real-time</div>
+                        <div class="card-body p-4">
+                            <form onsubmit="handleCekStatus(event)" class="row g-2">
+                                <div class="col-md-9">
+                                    <input type="text" class="form-control form-control-lg" id="searchTicketInput" placeholder="Masukkan Nomor Tiket (cth: ADU-20261013-0001)" required>
+                                </div>
+                                <div class="col-md-3">
+                                    <button type="submit" class="btn btn-primary btn-lg w-100 fw-semibold" style="background-color: var(--gov-blue);">Cek Status</button>
+                                </div>
+                            </form>
+                        </div>
+                    </div>
+
+                    <div id="trackerResultContainer" class="d-none">
+                        <div class="card card-gov mb-4">
+                            <div class="card-body p-4">
+                                <div class="d-flex flex-wrap justify-content-between align-items-center mb-3 border-bottom pb-3">
+                                    <div>
+                                        <span class="text-muted small">Nomor Tiket:</span>
+                                        <h4 class="fw-bold text-dark font-monospace mb-0" id="trackTicketNo">-</h4>
+                                    </div>
+                                    <div><span class="badge badge-status" id="trackBadgeStatus">MENUNGGU</span></div>
+                                </div>
+
+                                <div class="timeline-steps my-4" id="timelineSteps">
+                                    <div class="timeline-step active" id="step1">
+                                        <div class="timeline-icon"><i class="fa-solid fa-envelope-open-text"></i></div>
+                                        <div class="fw-semibold small">Pengaduan Diterima</div>
+                                        <small class="text-muted d-block" id="step1Time">-</small>
+                                    </div>
+                                    <div class="timeline-step" id="step2">
+                                        <div class="timeline-icon"><i class="fa-solid fa-gears"></i></div>
+                                        <div class="fw-semibold small">Sedang Diproses</div>
+                                        <small class="text-muted d-block" id="step2Time">-</small>
+                                    </div>
+                                    <div class="timeline-step" id="step3">
+                                        <div class="timeline-icon"><i class="fa-solid fa-circle-check"></i></div>
+                                        <div class="fw-semibold small">Pengaduan Selesai</div>
+                                        <small class="text-muted d-block" id="step3Time">-</small>
+                                    </div>
+                                </div>
+
+                                <div class="alert alert-secondary mb-3 rounded-3" id="trackMessageAlert">
+                                    <i class="fa-solid fa-circle-info me-2 text-primary"></i>
+                                    <span id="trackMessageText">Pengaduan Anda telah diterima dan sedang menunggu penanganan admin.</span>
+                                </div>
+
+                                <div class="row g-3 mt-2 bg-light p-3 rounded border">
+                                    <div class="col-sm-6"><small class="text-muted d-block">Nama Pelapor:</small><span class="fw-semibold" id="trackNama">-</span></div>
+                                    <div class="col-sm-6"><small class="text-muted d-block">Unit Kerja:</small><span class="fw-semibold" id="trackUnitKerja">-</span></div>
+                                    <div class="col-sm-6"><small class="text-muted d-block">Admin Penanggung Jawab:</small><span class="fw-semibold text-primary" id="trackAdmin">-</span></div>
+                                    <div class="col-sm-6"><small class="text-muted d-block">Lama Penanganan:</small><span class="fw-semibold text-dark" id="trackLamaPenanganan">-</span></div>
+                                    <div class="col-12 border-top pt-2" id="trackCatatanRow">
+                                        <small class="text-muted d-block">Catatan / Solusi Admin:</small>
+                                        <div class="p-2 bg-white rounded border mt-1 text-dark" id="trackCatatanAdmin">-</div>
+                                    </div>
+                                </div>
+
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="tab-pane-custom d-none" id="pane-admin">
+            <div class="d-flex flex-wrap justify-content-between align-items-center mb-4 gap-2">
+                <div>
+                    <h3 class="fw-bold mb-1 text-dark"><i class="fa-solid fa-user-shield me-2 text-primary"></i>Dashboard Admin Pengaduan</h3>
+                    <p class="text-muted mb-0">Login sebagai: <strong id="activeAdminNameDisplay" class="text-primary">-</strong> <span id="activeAdminRoleBadge" class="badge bg-secondary ms-1">-</span></p>
+                </div>
+                <div class="d-flex align-items-center gap-2 flex-wrap">
+                    <button class="btn btn-primary btn-sm fw-semibold super-admin-only" id="btnKelolaUsers" onclick="switchTab('users-tab')"><i class="fa-solid fa-users-gear me-1"></i> Kelola User</button>
+                    <button class="btn btn-warning btn-sm fw-semibold text-dark super-admin-only" id="btnSetupGas" onclick="switchTab('docs-tab')"><i class="fa-solid fa-sliders me-1"></i> Setup Endpoint</button>
+                    <button class="btn btn-outline-success btn-sm" onclick="exportDataToCSV()"><i class="fa-solid fa-file-excel me-1"></i> Export Data</button>
+                    <button class="btn btn-outline-primary btn-sm" onclick="syncWithGoogleSheets(true)"><i class="fa-solid fa-arrows-rotate me-1"></i> Refresh Data</button>
+                    <button class="btn btn-outline-danger btn-sm" onclick="adminLogout()"><i class="fa-solid fa-right-from-bracket me-1"></i> Logout</button>
+                </div>
+            </div>
+
+            <!-- STATISTIK -->
+            <div class="row g-3 mb-4">
+                <div class="col-6 col-md-4 col-xl-2"><div class="card card-gov p-3 text-center"><span class="text-muted small fw-semibold">Total</span><h3 class="fw-bold my-1 text-dark" id="statTotal">0</h3></div></div>
+                <div class="col-6 col-md-4 col-xl-2"><div class="card card-gov p-3 text-center border-warning"><span class="text-muted small fw-semibold">Menunggu</span><h3 class="fw-bold my-1 text-warning" id="statMenunggu">0</h3></div></div>
+                <div class="col-6 col-md-4 col-xl-2"><div class="card card-gov p-3 text-center border-info"><span class="text-muted small fw-semibold">Diproses</span><h3 class="fw-bold my-1 text-info" id="statDiproses">0</h3></div></div>
+                <div class="col-6 col-md-4 col-xl-2"><div class="card card-gov p-3 text-center border-success"><span class="text-muted small fw-semibold">Selesai</span><h3 class="fw-bold my-1 text-success" id="statSelesai">0</h3></div></div>
+                <div class="col-6 col-md-4 col-xl-2"><div class="card card-gov p-3 text-center border-danger"><span class="text-muted small fw-semibold">Ditolak</span><h3 class="fw-bold my-1 text-danger" id="statDitolak">0</h3></div></div>
+                <div class="col-6 col-md-4 col-xl-2"><div class="card card-gov p-3 text-center"><span class="text-muted small fw-semibold">Hari Ini</span><h3 class="fw-bold my-1 text-primary" id="statHariIni">0</h3></div></div>
+            </div>
+
+            <!-- FILTER -->
+            <div class="card card-gov mb-4">
+                <div class="card-body p-3">
+                    <div class="row g-2">
+                        <div class="col-md-3"><input type="text" class="form-control" id="filterSearch" placeholder="Cari Nama, NIP, Tiket..." oninput="applyAdminFilters()"></div>
+                        <div class="col-md-3">
+                            <select class="form-select" id="filterStatus" onchange="applyAdminFilters()">
+                                <option value="SEMUA">-- Semua Status --</option>
+                                <option value="Menunggu">Menunggu</option>
+                                <option value="Diproses">Diproses</option>
+                                <option value="Selesai">Selesai</option>
+                                <option value="Ditolak">Ditolak</option>
+                            </select>
+                        </div>
+                        <div class="col-md-3"><input type="text" class="form-control" id="filterUnitKerja" placeholder="Filter Unit Kerja..." oninput="applyAdminFilters()"></div>
+                        <div class="col-md-3"><input type="date" class="form-control" id="filterDate" onchange="applyAdminFilters()"></div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- TABEL ADUAN -->
+            <div class="card card-gov overflow-hidden">
+                <div class="table-responsive">
+                    <table class="table table-hover align-middle mb-0">
+                        <thead class="table-light">
+                            <tr>
+                                <th>No. Tiket</th>
+                                <th>Pelapor (NIP)</th>
+                                <th>Unit Kerja</th>
+                                <th>Rincian Masalah</th>
+                                <th>Tanggal / Jam</th>
+                                <th>Status</th>
+                                <th>Admin PJ</th>
+                                <th class="text-end">Aksi</th>
+                            </tr>
+                        </thead>
+                        <tbody id="adminTableBody"></tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+
+        <div class="tab-pane-custom d-none" id="pane-users">
+            <div class="d-flex justify-content-between align-items-center mb-4 pb-2 border-bottom">
+                <div><h3 class="fw-bold mb-1 text-dark"><i class="fa-solid fa-users-gear me-2 text-primary"></i>Kelola User Pemeriksa (Tersimpan di Google Sheets)</h3></div>
+                <button class="btn btn-outline-secondary btn-sm fw-semibold" onclick="switchTab('admin-tab')"><i class="fa-solid fa-arrow-left me-1"></i> Kembali ke Dashboard</button>
+            </div>
+            <div class="row g-4">
+                <div class="col-lg-4">
+                    <div class="card card-gov">
+                        <div class="card-header-gov bg-light"><i class="fa-solid fa-user-plus me-2 text-primary"></i>Tambah Pemeriksa Baru</div>
+                        <div class="card-body p-4">
+                            <form id="formAddUser" onsubmit="handleAddUser(event)">
+                                <div class="mb-3">
+                                    <label for="newUserName" class="form-label fw-semibold small">Nama Lengkap & Gelar *</label>
+                                    <input type="text" class="form-control" id="newUserName" placeholder="Contoh: Bobby Van Jan, S.H." required>
+                                </div>
+                                <div class="mb-3">
+                                    <label for="newUserRole" class="form-label fw-semibold small">Jabatan / Tim Pemeriksa *</label>
+                                    <input type="text" class="form-control" id="newUserRole" placeholder="Contoh: Pemeriksa Disiplin" required>
+                                </div>
+                                <div class="mb-3">
+                                    <label for="newUserPin" class="form-label fw-semibold small">PIN Access *</label>
+                                    <input type="password" class="form-control font-monospace text-center fs-5" id="newUserPin" maxlength="6" placeholder="123456" required>
+                                </div>
+                                <button type="submit" class="btn btn-primary w-100 fw-semibold" id="btnAddUserBtn" style="background-color: var(--gov-blue);">
+                                    <i class="fa-solid fa-plus me-1"></i> Tambah User Ke Google Sheet
+                                </button>
+                            </form>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-lg-8">
+                    <div class="card card-gov overflow-hidden">
+                        <div class="card-header-gov bg-light d-flex justify-content-between align-items-center">
+                            <span><i class="fa-solid fa-users me-2 text-primary"></i>Daftar Pemeriksa Aktif</span>
+                            <span class="badge bg-primary text-white" id="userCountBadge">0 User</span>
+                        </div>
+                        <div class="table-responsive">
+                            <table class="table table-hover align-middle mb-0">
+                                <thead class="table-light">
+                                    <tr>
+                                        <th>Nama Pemeriksa</th>
+                                        <th>Jabatan / Tim</th>
+                                        <th>PIN</th>
+                                        <th class="text-end">Aksi</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="userTableBody"></tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="tab-pane-custom d-none" id="pane-docs">
+            <div class="d-flex justify-content-between align-items-center mb-4 pb-2 border-bottom">
+                <button class="btn btn-outline-secondary btn-sm fw-semibold" onclick="switchTab('admin-tab')"><i class="fa-solid fa-arrow-left me-1"></i> Kembali ke Dashboard</button>
+                <span class="badge bg-warning text-dark px-3 py-2 fw-semibold"><i class="fa-solid fa-lock me-1"></i> Area Konfigurasi Admin</span>
+            </div>
+            <div class="card card-gov border-primary mb-4">
+                <div class="card-header-gov bg-primary text-white"><i class="fa-solid fa-sliders me-2"></i> Konfigurasi Endpoint Google Apps Script</div>
+                <div class="card-body p-4">
+                    <p class="text-muted mb-3">Masukkan Web App URL dari Google Apps Script yang sudah di-deploy (Deployed as Web App - Anyone):</p>
+                    <div class="row g-2 align-items-center mb-3">
+                        <div class="col-md-7"><input type="url" class="form-control" id="gasEndpointUrlInput" placeholder="https://script.google.com/macros/s/.../exec"></div>
+                        <div class="col-md-3">
+                            <button class="btn btn-success w-100 fw-semibold" onclick="saveGasEndpoint()"><i class="fa-solid fa-floppy-disk me-1"></i> Simpan Endpoint</button>
+                        </div>
+                        <div class="col-md-2">
+                            <button class="btn btn-outline-primary w-100 fw-semibold" onclick="testGasEndpoint()"><i class="fa-solid fa-plug me-1"></i> Uji Koneksi</button>
+                        </div>
+                    </div>
+                    <div class="alert alert-info small mb-0">
+                        <i class="fa-solid fa-lightbulb me-2 text-warning fs-5"></i><strong>Panduan Memastikan Tabel Terbuat di Google Sheets:</strong>
+                        <ol class="mb-0 mt-2 ps-3">
+                            <li>Buka Google Sheets Anda &rarr; Klik menu <strong>Ekstensi</strong> &rarr; <strong>Apps Script</strong>.</li>
+                            <li>Tempel seluruh kode dari <code>Code.gs</code> lalu klik tombol <strong>Simpan (Ctrl+S)</strong>.</li>
+                            <li>Jika menggunakan Apps Script terpisah (script.google.com), salin <strong>ID Spreadsheet</strong> dari URL browser Google Sheets (contoh: <code>docs.google.com/spreadsheets/d/<b>ID_SPREADSHEET</b>/edit</code>) dan tempel ke <code>CONFIG.SPREADSHEET_ID</code> di <code>Code.gs</code>.</li>
+                            <li>Klik tombol <strong>Penerapan (Deploy)</strong> &rarr; <strong>Penerapan baru (New deployment)</strong>.</li>
+                            <li>Pilih tipe <strong>Aplikasi Web (Web app)</strong>, atur <em>Jalankan sebagai: Saya (Me)</em> dan <em>Siapa yang memiliki akses: Siapa saja (Anyone)</em>.</li>
+                            <li>Salin URL Web App dan tempelkan di kolom input di atas, lalu klik <strong>Uji Koneksi</strong>. Tabel <code>PENGADUAN</code> dan <code>ADMINS</code> akan langsung dibuat secara otomatis!</li>
+                        </ol>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+    </main>
+
+    <!-- MODAL LOGIN ADMIN -->
+    <div class="modal fade" id="adminLoginModal" data-bs-backdrop="static" data-bs-keyboard="false" tabindex="-1">
+        <div class="modal-dialog modal-dialog-centered">
+            <div class="modal-content">
+                <div class="modal-header bg-primary text-white">
+                    <h5 class="modal-title fw-bold fs-6"><i class="fa-solid fa-user-lock me-2"></i>Login Admin / Pemeriksa</h5>
+                    <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body p-4">
+                    <form onsubmit="handleAdminLogin(event)">
+                        <div class="mb-3">
+                            <label for="adminSelectUser" class="form-label fw-semibold small">Pilih Akun Pemeriksa (Dari Google Sheets)</label>
+                            <select class="form-select" id="adminSelectUser" required></select>
+                        </div>
+                        <div class="mb-3">
+                            <label for="adminPinInput" class="form-label fw-semibold small">PIN Access</label>
+                            <input type="password" class="form-control text-center fs-4 font-monospace" id="adminPinInput" placeholder="••••••••" required>
+                        </div>
+                        <button type="submit" class="btn btn-primary w-100 fw-semibold" style="background-color: var(--gov-blue);">
+                            <i class="fa-solid fa-right-to-bracket me-1"></i> Masuk Dashboard
+                        </button>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- MODAL DETAIL ADUAN & PROSES -->
+    <div class="modal fade" id="adminDetailModal" tabindex="-1" aria-hidden="true">
+        <div class="modal-dialog modal-lg modal-dialog-centered">
+            <div class="modal-content">
+                <div class="modal-header bg-light">
+                    <h5 class="modal-header-title fw-bold text-primary mb-0" id="modalTicketTitle">Detail Pengaduan</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body p-4">
+                    <div class="row g-3">
+                        <div class="col-sm-6"><small class="text-muted d-block">Nama Lengkap:</small><span class="fw-semibold text-dark" id="modalNama">-</span></div>
+                        <div class="col-sm-6"><small class="text-muted d-block">NIP:</small><span class="fw-semibold text-dark" id="modalNip">-</span></div>
+                        <div class="col-sm-6"><small class="text-muted d-block">Unit Kerja:</small><span class="fw-semibold text-dark" id="modalUnitKerja">-</span></div>
+                        <div class="col-sm-6"><small class="text-muted d-block">Kontak:</small><span class="fw-semibold text-dark" id="modalKontak">-</span></div>
+                        <div class="col-sm-6"><small class="text-muted d-block">Status Saat Ini:</small><span id="modalStatusBadge" class="badge badge-status">-</span></div>
+                        <div class="col-sm-6"><small class="text-muted d-block">Admin Penanggung Jawab:</small><span class="fw-semibold text-primary" id="modalAdminPJ">-</span></div>
+                        <div class="col-12 border-top pt-2">
+                            <small class="text-muted d-block">Rincian Permasalahan:</small>
+                            <div class="p-3 bg-light rounded border mt-1 text-dark" id="modalPermasalahan" style="white-space: pre-wrap;">-</div>
+                        </div>
+                        <div class="col-12 border-top pt-2 d-none" id="modalCatatanSection">
+                            <small class="text-muted d-block">Catatan / Solusi Penyelesaian Admin:</small>
+                            <div class="p-3 bg-white rounded border mt-1 text-dark fw-medium" id="modalCatatanDisplay" style="white-space: pre-wrap;">-</div>
+                        </div>
+                        <div class="col-12 d-none" id="modalDokumenRow">
+                            <small class="text-muted d-block">Dokumen Pendukung:</small>
+                            <button type="button" id="modalDokumenBtn" class="btn btn-sm btn-outline-primary mt-1" onclick="openSupportDocument('modal')">
+                                <i class="fa-solid fa-arrow-up-right-from-square me-1"></i> Buka Dokumen
+                            </button>
+                        </div>
+                    </div>
+                </div>
+                <div class="modal-footer bg-light" id="modalActionFooter"></div>
+            </div>
+        </div>
+    </div>
+
+    <!-- MODAL SELESAI / TOLAK TIKET -->
+    <div class="modal fade" id="completeModal" tabindex="-1" aria-hidden="true">
+        <div class="modal-dialog modal-dialog-centered">
+            <div class="modal-content">
+                <div class="modal-header text-white" id="completeModalHeader">
+                    <h5 class="modal-title fw-bold" id="completeModalTitle"><i class="fa-solid fa-circle-check me-2"></i>Penyelesaian Pengaduan</h5>
+                    <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body p-4">
+                    <div class="mb-3">
+                        <label for="catatanSelesaiInput" class="form-label fw-semibold">Catatan / Solusi Admin <span class="text-danger">*</span></label>
+                        <textarea class="form-control" id="catatanSelesaiInput" rows="4" placeholder="Tuliskan hasil pemeriksaan, rekomendasi, atau alasan penolakan secara jelas..." required></textarea>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">Batal</button>
+                    <button type="button" class="btn btn-success fw-semibold px-4" id="btnConfirmComplete" onclick="confirmCompleteTicket()">
+                        <i class="fa-solid fa-check me-1"></i> Simpan Ke Google Sheet & Kirim Notifikasi
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Bootstrap JS Bundle -->
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
+
+    <script>
+        const LOCAL_STORAGE_KEY = 'SIPERMAS_ASN_DATABASE_V1';
+        const USER_STORAGE_KEY = 'SIPERMAS_ASN_USERS_V1';
+        const GAS_ENDPOINT_KEY = 'SIPERMAS_ASN_GAS_ENDPOINT';
+        const DEFAULT_PIN = '123456';
+
+        // Endpoint Web App default Google Apps Script
+        const DEFAULT_GAS_ENDPOINT = 'https://script.google.com/macros/s/AKfycbwLPkt5wu03zTWhq5VrqB_mNQGnJHxhi5Rs_8WVBbjmEcwAOmpu_mEeK1kAwYusSsQSuw/exec';
+
+        let appData = [];
+        let userList = [];
+        let activeTicketForAction = null;
+        let pendingActionStatus = 'Selesai';
+        let gasEndpointUrl = localStorage.getItem(GAS_ENDPOINT_KEY) || DEFAULT_GAS_ENDPOINT;
+        let isAdminLoggedIn = false;
+        let activeAdminUser = { id: '', name: 'Admin Kepegawaian', role: 'Operator', isSuperAdmin: false };
+        let autoSyncTimer = null;
+
+        window.addEventListener('DOMContentLoaded', () => {
+            initClock();
+            loadLocalCache();
+            renderAdminUserSelect();
+            renderAdminTable();
+            updateAdminStats();
+            applyRolePermissions();
+            
+            // Sync awal dari Google Sheets
+            syncWithGoogleSheets();
+
+            // Setup sinkronisasi real-time periodik setiap 12 detik
+            autoSyncTimer = setInterval(() => {
+                syncWithGoogleSheets(false);
+            }, 12000);
+        });
+
+        function initClock() {
+            updateClockInputs();
+            setInterval(updateClockInputs, 1000);
+        }
+
+        function updateClockInputs() {
+            const now = new Date();
+            const autoTanggal = document.getElementById('autoTanggal');
+            const autoJam = document.getElementById('autoJam');
+            if (autoTanggal) autoTanggal.value = formatDateWIB(now);
+            if (autoJam) autoJam.value = formatTimeWIB(now);
+        }
+
+        function formatDateWIB(date) {
+            const d = String(date.getDate()).padStart(2, '0');
+            const m = String(date.getMonth() + 1).padStart(2, '0');
+            const y = date.getFullYear();
+            return `${d}-${m}-${y}`;
+        }
+
+        function formatTimeWIB(date) {
+            const h = String(date.getHours()).padStart(2, '0');
+            const i = String(date.getMinutes()).padStart(2, '0');
+            const s = String(date.getSeconds()).padStart(2, '0');
+            return `${h}:${i}:${s}`;
+        }
+
+        function calculateSLA(tglMulai, jamMulai, tglSelesai, jamSelesai) {
+            try {
+                if (!tglMulai || tglMulai === '-' || !tglSelesai || tglSelesai === '-') return "1 Jam";
+                const parseDate = (dStr, tStr) => {
+                    const p = dStr.split('-');
+                    const t = tStr.split(':');
+                    return new Date(p[2], p[1] - 1, p[0], t[0], t[1], t[2] || 0);
+                };
+                const start = parseDate(tglMulai, jamMulai);
+                const end = parseDate(tglSelesai, jamSelesai);
+                const diffMs = Math.max(0, end - start);
+                const diffHrs = Math.floor(diffMs / (1000 * 60 * 60));
+                const diffMins = Math.round((diffMs % (1000 * 60 * 60)) / (1000 * 60));
+                
+                if (diffHrs === 0) return `${diffMins} Menit`;
+                return `${diffHrs} Jam ${diffMins} Menit`;
+            } catch (e) {
+                return "1 Jam";
+            }
+        }
+
+        function loadLocalCache() {
+            try {
+                const storedTickets = localStorage.getItem(LOCAL_STORAGE_KEY);
+                if (storedTickets) appData = JSON.parse(storedTickets);
+                
+                const storedUsers = localStorage.getItem(USER_STORAGE_KEY);
+                if (storedUsers) userList = JSON.parse(storedUsers);
+            } catch (e) { console.error(e); }
+
+            if (!userList || !Array.isArray(userList) || userList.length === 0) {
+                userList = [
+                    { id: 'usr-1', name: 'Ahmad Hidayat', role: 'Pemeriksa SDM', pin: '123456', isSuperAdmin: false },
+                    { id: 'usr-2', name: 'Siti Rahmawati', role: 'Pemeriksa Keuangan', pin: '123456', isSuperAdmin: false },
+                    { id: 'usr-3', name: 'Super Admin Kepegawaian', role: 'Administrator Utama', pin: '123456', isSuperAdmin: true }
+                ];
+            }
+        }
+
+        function saveLocalCache() {
+            localStorage.setItem(LOCAL_STORAGE_KEY, JSON.stringify(appData));
+            localStorage.setItem(USER_STORAGE_KEY, JSON.stringify(userList));
+        }
+
+        async function syncWithGoogleSheets(showToast = false) {
+            const badge = document.getElementById('gasSyncStatusBadge');
+            if (!gasEndpointUrl) {
+                if (badge) {
+                    badge.className = "badge bg-warning text-dark sync-badge";
+                    badge.innerHTML = `<i class="fa-solid fa-triangle-exclamation me-1"></i> Modus Lokal (Set Endpoint)`;
+                }
+                return;
+            }
+
+            try {
+                if (badge && showToast) {
+                    badge.className = "badge bg-info text-dark sync-badge";
+                    badge.innerHTML = `<i class="fa-solid fa-arrows-rotate fa-spin me-1"></i> Menyinkronkan...`;
+                }
+
+                // Fetch data Tiket & User sekaligus
+                const ticketsRes = await fetch(`${gasEndpointUrl}?action=getAll`);
+                const ticketsJson = await ticketsRes.json();
+
+                if (ticketsJson && ticketsJson.success && Array.isArray(ticketsJson.data)) {
+                    appData = ticketsJson.data;
+                }
+
+                const usersRes = await fetch(`${gasEndpointUrl}?action=getAdmins`);
+                const usersJson = await usersRes.json();
+
+                if (usersJson && usersJson.success && Array.isArray(usersJson.data) && usersJson.data.length > 0) {
+                    userList = usersJson.data;
+                }
+
+                saveLocalCache();
+                renderAdminTable();
+                updateAdminStats();
+                renderUserTable();
+                renderAdminUserSelect();
+
+                if (badge) {
+                    badge.className = "badge bg-success text-white sync-badge";
+                    badge.innerHTML = `<i class="fa-solid fa-cloud-check me-1"></i> Google Sheets Real-time`;
+                }
+
+                if (showToast) {
+                    Swal.fire({
+                        icon: 'success',
+                        title: 'Data Terupdate',
+                        text: 'Berhasil menyinkronkan data langsung dari Google Sheets!',
+                        toast: true,
+                        position: 'top-end',
+                        showConfirmButton: false,
+                        timer: 2500
+                    });
+                }
+            } catch (error) {
+                console.warn('Real-time sync error:', error);
+                if (badge) {
+                    badge.className = "badge bg-danger text-white sync-badge";
+                    badge.innerHTML = `<i class="fa-solid fa-wifi me-1"></i> Sinkron Offline`;
+                }
+            }
+        }
+
+        async function callGasApi(payload) {
+            if (!gasEndpointUrl) return null;
+            try {
+                const response = await fetch(gasEndpointUrl, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'text/plain;charset=utf-8' },
+                    body: JSON.stringify(payload)
+                });
+                return await response.json();
+            } catch (e) {
+                console.error("API Call Error:", e);
+                return null;
+            }
+        }
+
+        async function handleFormSubmit(e) {
+            e.preventDefault();
+            const btnSubmit = document.getElementById('btnSubmitForm');
+            const iconBtn = document.getElementById('iconSubmitBtn');
+            const textBtn = document.getElementById('textSubmitBtn');
+
+            try {
+                const nama = document.getElementById('nama').value.trim();
+                let nip = document.getElementById('nip').value.replace(/[^0-9]/g, '');
+                const unitKerja = document.getElementById('unitKerja').value.trim();
+                let noHp = document.getElementById('noHp').value.replace(/[^0-9]/g, '');
+                const email = document.getElementById('email').value.trim();
+                const permasalahan = document.getElementById('permasalahan').value.trim();
+                const dokumenInput = document.getElementById('dokumen');
+
+                if (!nama) return Swal.fire('Form Tidak Lengkap', 'Silakan isi Nama Lengkap Anda.', 'warning');
+                if (nip.length < 10) return Swal.fire('NIP Tidak Valid', 'Masukkan nomor NIP yang valid.', 'warning');
+                if (!unitKerja) return Swal.fire('Form Tidak Lengkap', 'Silakan isi Unit Kerja Anda.', 'warning');
+                if (noHp.length < 9) return Swal.fire('No. WhatsApp Tidak Valid', 'Masukkan nomor HP/WA yang valid.', 'warning');
+                if (!email || !email.includes('@')) return Swal.fire('Email Tidak Valid', 'Masukkan alamat email yang valid.', 'warning');
+                if (permasalahan.length < 10) return Swal.fire('Permasalahan Terlalu Singkat', 'Jelaskan rincian permasalahan minimal 10 karakter.', 'warning');
+
+                btnSubmit.disabled = true;
+                iconBtn.className = "fa-solid fa-spinner fa-spin me-1";
+                textBtn.textContent = "Mengirim Ke Google Sheets...";
+
+                let fileBase64 = "";
+                let fileName = "-";
+                let fileType = "";
+
+                if (dokumenInput.files && dokumenInput.files[0]) {
+                    const file = dokumenInput.files[0];
+                    if (file.size > 5 * 1024 * 1024) {
+                        btnSubmit.disabled = false;
+                        iconBtn.className = "fa-solid fa-paper-plane me-1";
+                        textBtn.textContent = "Kirim Pengaduan";
+                        return Swal.fire('File Terlalu Besar', 'Ukuran dokumen pendukung maksimal 5 MB.', 'warning');
+                    }
+                    fileName = file.name;
+                    fileType = file.type;
+                    fileBase64 = await convertFileToBase64(file);
+                }
+
+                const now = new Date();
+                const dateStr = formatDateWIB(now);
+                const timeStr = formatTimeWIB(now);
+                const yyyymmdd = now.getFullYear() + String(now.getMonth() + 1).padStart(2, '0') + String(now.getDate()).padStart(2, '0');
+                const sequence = String(appData.length + 1).padStart(4, '0');
+                const ticketNumber = `ADU-${yyyymmdd}-${sequence}`;
+                const id = `ID-${now.getTime()}`;
+
+                const newTicket = {
+                    id: id,
+                    ticket: ticketNumber,
+                    nama: nama,
+                    nip: nip,
+                    unitKerja: unitKerja,
+                    noHp: noHp,
+                    email: email,
+                    permasalahan: permasalahan,
+                    dokumen: fileName,
+                    dokumenUrl: "",
+                    fileBase64: fileBase64,
+                    fileType: fileType,
+                    tanggal: dateStr,
+                    jam: timeStr,
+                    status: "Menunggu",
+                    catatanAdmin: "-",
+                    tanggalMulai: "-",
+                    jamMulai: "-",
+                    tanggalSelesai: "-",
+                    jamSelesai: "-",
+                    lamaPenanganan: "-",
+                    admin: "-"
+                };
+
+                // Simpan ke local cache terlebih dahulu
+                appData.unshift(newTicket);
+                saveLocalCache();
+
+                // Kirim langsung ke Google Apps Script (Google Sheets)
+                if (gasEndpointUrl) {
+                    await callGasApi({ action: 'submit', ...newTicket });
+                    await syncWithGoogleSheets(false);
+                }
+
+                btnSubmit.disabled = false;
+                iconBtn.className = "fa-solid fa-paper-plane me-1";
+                textBtn.textContent = "Kirim Pengaduan";
+
+                document.getElementById('formPengaduan').reset();
+                updateClockInputs();
+                showReceiptView(newTicket);
+
+            } catch (err) {
+                console.error("Submit Error:", err);
+                btnSubmit.disabled = false;
+                iconBtn.className = "fa-solid fa-paper-plane me-1";
+                textBtn.textContent = "Kirim Pengaduan";
+                Swal.fire('Terjadi Kesalahan', 'Gagal memproses formulir. Silakan coba lagi.', 'error');
+            }
+        }
+
+        function convertFileToBase64(file) {
+            return new Promise((resolve, reject) => {
+                const reader = new FileReader();
+                reader.readAsDataURL(file);
+                reader.onload = () => resolve(reader.result);
+                reader.onerror = error => reject(error);
+            });
+        }
+
+        function showReceiptView(ticketObj) {
+            document.getElementById('receiptTicket').textContent = ticketObj.ticket;
+            document.getElementById('receiptNama').textContent = ticketObj.nama;
+            document.getElementById('receiptNip').textContent = ticketObj.nip;
+            document.getElementById('receiptUnitKerja').textContent = ticketObj.unitKerja;
+            document.getElementById('receiptNoHp').textContent = ticketObj.noHp;
+            document.getElementById('receiptTanggal').textContent = ticketObj.tanggal;
+            document.getElementById('receiptJam').textContent = ticketObj.jam;
+            document.getElementById('receiptPermasalahan').textContent = ticketObj.permasalahan;
+            document.getElementById('receiptPrintTimestamp').textContent = `${ticketObj.tanggal} ${ticketObj.jam} WIT`;
+
+            if (ticketObj.dokumen && ticketObj.dokumen !== '-') {
+                document.getElementById('receiptDokumenRow').classList.remove('d-none');
+            } else {
+                document.getElementById('receiptDokumenRow').classList.add('d-none');
+            }
+
+            switchTab('sukses-tab');
+        }
+
+        function switchTab(tabId) {
+            if ((tabId === 'admin-tab' || tabId === 'users-tab' || tabId === 'docs-tab') && !isAdminLoggedIn) {
+                tryOpenAdminTab(tabId);
+                return;
+            }
+
+            const navLinks = document.querySelectorAll('#mainTab .nav-link');
+            navLinks.forEach(link => link.classList.remove('active'));
+
+            if (tabId === 'form-tab') document.getElementById('form-tab').classList.add('active');
+            else if (tabId === 'status-tab') document.getElementById('status-tab').classList.add('active');
+            else if (tabId === 'admin-tab' || tabId === 'users-tab' || tabId === 'docs-tab') document.getElementById('admin-tab').classList.add('active');
+
+            document.querySelectorAll('.tab-pane-custom').forEach(pane => pane.classList.add('d-none'));
+
+            if (tabId === 'form-tab') document.getElementById('pane-form').classList.remove('d-none');
+            else if (tabId === 'sukses-tab') document.getElementById('pane-sukses').classList.remove('d-none');
+            else if (tabId === 'status-tab') document.getElementById('pane-status').classList.remove('d-none');
+            else if (tabId === 'admin-tab') {
+                document.getElementById('pane-admin').classList.remove('d-none');
+                syncWithGoogleSheets(false);
+            } else if (tabId === 'users-tab') {
+                document.getElementById('pane-users').classList.remove('d-none');
+                renderUserTable();
+            } else if (tabId === 'docs-tab') {
+                document.getElementById('pane-docs').classList.remove('d-none');
+                document.getElementById('gasEndpointUrlInput').value = gasEndpointUrl;
+            }
+
+            window.scrollTo({ top: 0, behavior: 'smooth' });
+        }
+
+        function tryOpenAdminTab(targetTab) {
+            if (isAdminLoggedIn) switchTab(targetTab);
+            else {
+                renderAdminUserSelect();
+                const modal = bootstrap.Modal.getOrCreateInstance(document.getElementById('adminLoginModal'));
+                modal.show();
+            }
+        }
+
+        function renderAdminUserSelect() {
+            const selectEl = document.getElementById('adminSelectUser');
+            if (!selectEl) return;
+            selectEl.innerHTML = '';
+            userList.forEach(usr => {
+                const opt = document.createElement('option');
+                opt.value = usr.id;
+                opt.textContent = `${usr.name} (${usr.role}) ${usr.isSuperAdmin ? '⭐ Super Admin' : ''}`;
+                selectEl.appendChild(opt);
+            });
+        }
+
+        function handleAdminLogin(e) {
+            e.preventDefault();
+            const inputPin = document.getElementById('adminPinInput').value.trim();
+            const userId = document.getElementById('adminSelectUser').value;
+            const targetUser = userList.find(u => u.id === userId);
+
+            if (targetUser && (inputPin === targetUser.pin || inputPin === DEFAULT_PIN)) {
+                isAdminLoggedIn = true;
+                activeAdminUser = { id: targetUser.id, name: targetUser.name, role: targetUser.role, isSuperAdmin: targetUser.isSuperAdmin };
+                document.getElementById('activeAdminNameDisplay').textContent = targetUser.name;
+                document.getElementById('activeAdminRoleBadge').textContent = targetUser.role;
+
+                bootstrap.Modal.getInstance(document.getElementById('adminLoginModal')).hide();
+                applyRolePermissions();
+                switchTab('admin-tab');
+            } else {
+                Swal.fire('PIN Salah', 'PIN Access yang Anda masukkan tidak sesuai.', 'error');
+            }
+        }
+
+        function adminLogout() {
+            isAdminLoggedIn = false;
+            activeAdminUser = { id: '', name: 'Admin Kepegawaian', role: 'Operator', isSuperAdmin: false };
+            switchTab('form-tab');
+        }
+
+        function applyRolePermissions() {
+            document.querySelectorAll('.super-admin-only').forEach(el => {
+                if (isAdminLoggedIn && activeAdminUser.isSuperAdmin) el.classList.remove('d-none');
+                else el.classList.add('d-none');
+            });
+        }
+
+        function renderAdminTable() {
+            const tbody = document.getElementById('adminTableBody');
+            tbody.innerHTML = '';
+            const data = getFilteredAdminData();
+
+            if (data.length === 0) {
+                tbody.innerHTML = `<tr><td colspan="8" class="text-center py-4 text-muted">Belum ada data pengaduan yang sesuai filter.</td></tr>`;
+                return;
+            }
+
+            data.forEach(item => {
+                const tr = document.createElement('tr');
+                tr.innerHTML = `
+                    <td class="fw-bold font-monospace text-primary">${item.ticket}</td>
+                    <td><div class="fw-semibold">${item.nama}</div><small class="text-muted">${item.nip}</small></td>
+                    <td><small>${item.unitKerja}</small></td>
+                    <td><div class="text-truncate" style="max-width:180px;">${item.permasalahan}</div></td>
+                    <td><small>${item.tanggal} ${item.jam}</small></td>
+                    <td><span class="badge badge-status badge-status-${item.status.toLowerCase()}">${item.status}</span></td>
+                    <td><small>${item.admin}</small></td>
+                    <td class="text-end">
+                        <button class="btn btn-sm btn-outline-primary fw-semibold" onclick="openAdminDetailModal('${item.ticket}')">
+                            <i class="fa-solid fa-eye me-1"></i> Detail / Akses
+                        </button>
+                    </td>
+                `;
+                tbody.appendChild(tr);
+            });
+        }
+
+        function getFilteredAdminData() {
+            const search = document.getElementById('filterSearch').value.toLowerCase().trim();
+            const status = document.getElementById('filterStatus').value;
+            const unit = document.getElementById('filterUnitKerja').value.toLowerCase().trim();
+            const dateVal = document.getElementById('filterDate').value;
+
+            return appData.filter(item => {
+                const matchSearch = !search || item.ticket.toLowerCase().includes(search) || item.nama.toLowerCase().includes(search) || item.nip.includes(search);
+                const matchStatus = (status === 'SEMUA') || (item.status === status);
+                const matchUnit = !unit || item.unitKerja.toLowerCase().includes(unit);
+                
+                let matchDate = true;
+                if (dateVal) {
+                    const p = item.tanggal.split('-');
+                    const formattedItemDate = `${p[2]}-${p[1]}-${p[0]}`;
+                    matchDate = (formattedItemDate === dateVal);
+                }
+
+                return matchSearch && matchStatus && matchUnit && matchDate;
+            });
+        }
+
+        function applyAdminFilters() { renderAdminTable(); }
+
+        function updateAdminStats() {
+            const now = new Date();
+            const todayStr = formatDateWIB(now);
+
+            document.getElementById('statTotal').textContent = appData.length;
+            document.getElementById('statMenunggu').textContent = appData.filter(x => x.status === 'Menunggu').length;
+            document.getElementById('statDiproses').textContent = appData.filter(x => x.status === 'Diproses').length;
+            document.getElementById('statSelesai').textContent = appData.filter(x => x.status === 'Selesai').length;
+            document.getElementById('statDitolak').textContent = appData.filter(x => x.status === 'Ditolak').length;
+            document.getElementById('statHariIni').textContent = appData.filter(x => x.tanggal === todayStr).length;
+        }
+
+        function openAdminDetailModal(ticketNo) {
+            const item = appData.find(x => x.ticket === ticketNo);
+            if (!item) return;
+            activeTicketForAction = item;
+
+            document.getElementById('modalTicketTitle').textContent = `Detail Pengaduan: ${item.ticket}`;
+            document.getElementById('modalNama').textContent = item.nama;
+            document.getElementById('modalNip').textContent = item.nip;
+            document.getElementById('modalUnitKerja').textContent = item.unitKerja;
+            document.getElementById('modalKontak').textContent = `${item.noHp} / ${item.email}`;
+            document.getElementById('modalPermasalahan').textContent = item.permasalahan;
+            document.getElementById('modalAdminPJ').textContent = item.admin !== '-' ? item.admin : 'Belum Ditentukan';
+            
+            const badgeEl = document.getElementById('modalStatusBadge');
+            badgeEl.className = `badge badge-status badge-status-${item.status.toLowerCase()}`;
+            badgeEl.textContent = item.status;
+
+            const catatanSec = document.getElementById('modalCatatanSection');
+            if (item.catatanAdmin && item.catatanAdmin !== '-') {
+                catatanSec.classList.remove('d-none');
+                document.getElementById('modalCatatanDisplay').textContent = item.catatanAdmin;
+            } else {
+                catatanSec.classList.add('d-none');
+            }
+
+            if ((item.dokumen && item.dokumen !== '-') || item.dokumenUrl) {
+                document.getElementById('modalDokumenRow').classList.remove('d-none');
+            } else {
+                document.getElementById('modalDokumenRow').classList.add('d-none');
+            }
+
+            const footer = document.getElementById('modalActionFooter');
+            footer.innerHTML = '';
+
+            const deleteBtnHtml = activeAdminUser.isSuperAdmin 
+                ? `<button class="btn btn-outline-danger me-auto" onclick="deleteTicketAction('${item.ticket}')"><i class="fa-solid fa-trash me-1"></i> Hapus Usulan</button>` 
+                : `<span class="text-muted small me-auto"><i class="fa-solid fa-lock me-1"></i> Hapus khusus Super Admin</span>`;
+
+            if (item.status === 'Menunggu') {
+                footer.innerHTML = `
+                    ${deleteBtnHtml}
+                    <button class="btn btn-danger me-2" onclick="openCompleteModal('Ditolak')"><i class="fa-solid fa-xmark me-1"></i> Tolak Aduan</button>
+                    <button class="btn btn-primary" onclick="startProcessTicket('${item.ticket}')"><i class="fa-solid fa-gears me-1"></i> Mulai Proses</button>
+                `;
+            } else if (item.status === 'Diproses') {
+                footer.innerHTML = `
+                    ${deleteBtnHtml}
+                    <button class="btn btn-danger me-2" onclick="openCompleteModal('Ditolak')"><i class="fa-solid fa-xmark me-1"></i> Tolak Aduan</button>
+                    <button class="btn btn-success" onclick="openCompleteModal('Selesai')"><i class="fa-solid fa-check-double me-1"></i> Selesaikan Pengaduan</button>
+                `;
+            } else {
+                footer.innerHTML = `
+                    ${deleteBtnHtml}
+                    <button class="btn btn-secondary" data-bs-dismiss="modal">Tutup</button>
+                `;
+            }
+
+            bootstrap.Modal.getOrCreateInstance(document.getElementById('adminDetailModal')).show();
+        }
+
+        async function startProcessTicket(ticketNo) {
+            const item = appData.find(x => x.ticket === ticketNo);
+            if (!item) return;
+
+            const now = new Date();
+            const dateStr = formatDateWIB(now);
+            const timeStr = formatTimeWIB(now);
+
+            item.status = 'Diproses';
+            item.admin = activeAdminUser.name;
+            item.tanggalMulai = dateStr;
+            item.jamMulai = timeStr;
+            saveLocalCache();
+
+            if (gasEndpointUrl) {
+                await callGasApi({
+                    action: 'processTicket',
+                    ticket: item.ticket,
+                    admin: activeAdminUser.name,
+                    tanggalMulai: dateStr,
+                    jamMulai: timeStr
+                });
+                await syncWithGoogleSheets(false);
+            }
+
+            bootstrap.Modal.getInstance(document.getElementById('adminDetailModal')).hide();
+            renderAdminTable();
+            updateAdminStats();
+            Swal.fire('Status Diperbarui', `Tiket ${item.ticket} sekarang berstatus DIPROSES di Google Sheets.`, 'success');
+        }
+
+        function openCompleteModal(targetStatus) {
+            pendingActionStatus = targetStatus;
+            document.getElementById('catatanSelesaiInput').value = '';
+            
+            const header = document.getElementById('completeModalHeader');
+            const title = document.getElementById('completeModalTitle');
+            const btn = document.getElementById('btnConfirmComplete');
+
+            if (targetStatus === 'Ditolak') {
+                header.className = 'modal-header bg-danger text-white';
+                title.innerHTML = '<i class="fa-solid fa-circle-xmark me-2"></i>Penolakan Pengaduan';
+                btn.className = 'btn btn-danger fw-semibold px-4';
+            } else {
+                header.className = 'modal-header bg-success text-white';
+                title.innerHTML = '<i class="fa-solid fa-circle-check me-2"></i>Penyelesaian Pengaduan';
+                btn.className = 'btn btn-success fw-semibold px-4';
+            }
+
+            const detailModal = bootstrap.Modal.getInstance(document.getElementById('adminDetailModal'));
+            if (detailModal) detailModal.hide();
+
+            bootstrap.Modal.getOrCreateInstance(document.getElementById('completeModal')).show();
+        }
+
+        async function confirmCompleteTicket() {
+            const catatan = document.getElementById('catatanSelesaiInput').value.trim();
+            if (catatan.length < 5) return Swal.fire('Catatan Harus Diisi', 'Silakan masukkan catatan atau solusi penyelesaian (min. 5 karakter).', 'warning');
+
+            if (!activeTicketForAction) return;
+
+            const now = new Date();
+            const dateStr = formatDateWIB(now);
+            const timeStr = formatTimeWIB(now);
+            const lamaHandling = calculateSLA(activeTicketForAction.tanggalMulai, activeTicketForAction.jamMulai, dateStr, timeStr);
+
+            activeTicketForAction.status = pendingActionStatus;
+            activeTicketForAction.catatanAdmin = catatan;
+            activeTicketForAction.tanggalSelesai = dateStr;
+            activeTicketForAction.jamSelesai = timeStr;
+            activeTicketForAction.lamaPenanganan = lamaHandling;
+            activeTicketForAction.admin = activeAdminUser.name;
+
+            saveLocalCache();
+
+            if (gasEndpointUrl) {
+                await callGasApi({
+                    action: 'completeTicket',
+                    ticket: activeTicketForAction.ticket,
+                    status: pendingActionStatus,
+                    catatanAdmin: catatan,
+                    tanggalSelesai: dateStr,
+                    jamSelesai: timeStr,
+                    lamaPenanganan: lamaHandling,
+                    admin: activeAdminUser.name
+                });
+                await syncWithGoogleSheets(false);
+            }
+
+            bootstrap.Modal.getInstance(document.getElementById('completeModal')).hide();
+            renderAdminTable();
+            updateAdminStats();
+            Swal.fire('Berhasil Disimpan', `Pengaduan ${activeTicketForAction.ticket} telah ditandai ${pendingActionStatus.toUpperCase()} di Google Sheets & notifikasi dikirim.`, 'success');
+        }
+
+        function deleteTicketAction(ticketNo) {
+            if (!activeAdminUser.isSuperAdmin) {
+                return Swal.fire('Akses Ditolak', 'Hanya Super Admin Utama yang berhak menghapus usulan pengaduan.', 'error');
+            }
+
+            Swal.fire({
+                title: 'Hapus Usulan Pengaduan?',
+                text: `Apakah Anda yakin ingin menghapus tiket ${ticketNo} dari Google Sheets?`,
+                icon: 'warning',
+                showCancelButton: true,
+                confirmButtonColor: '#d33',
+                cancelButtonColor: '#3085d6',
+                confirmButtonText: 'Ya, Hapus'
+            }).then(async (result) => {
+                if (result.isConfirmed) {
+                    appData = appData.filter(x => x.ticket !== ticketNo);
+                    saveLocalCache();
+
+                    if (gasEndpointUrl) {
+                        await callGasApi({ action: 'deleteTicket', ticket: ticketNo });
+                        await syncWithGoogleSheets(false);
+                    }
+
+                    const detailModal = bootstrap.Modal.getInstance(document.getElementById('adminDetailModal'));
+                    if (detailModal) detailModal.hide();
+
+                    renderAdminTable();
+                    updateAdminStats();
+                    Swal.fire('Terhapus', 'Usulan pengaduan berhasil dihapus dari Google Sheets.', 'success');
+                }
+            });
+        }
+
+        function renderUserTable() {
+            const tbody = document.getElementById('userTableBody');
+            if (!tbody) return;
+            tbody.innerHTML = '';
+
+            document.getElementById('userCountBadge').textContent = `${userList.length} User`;
+
+            userList.forEach(usr => {
+                const tr = document.createElement('tr');
+                tr.innerHTML = `
+                    <td class="fw-semibold">${usr.name} ${usr.isSuperAdmin ? '<span class="badge bg-warning text-dark ms-1">Super Admin</span>' : ''}</td>
+                    <td><small class="text-muted">${usr.role}</small></td>
+                    <td class="font-monospace">••••••</td>
+                    <td class="text-end">
+                        ${!usr.isSuperAdmin ? `
+                            <button class="btn btn-sm btn-outline-danger" onclick="handleDeleteUser('${usr.id}')" title="Hapus User">
+                                <i class="fa-solid fa-trash"></i>
+                            </button>
+                        ` : '<span class="badge bg-light text-muted">Utama</span>'}
+                    </td>
+                `;
+                tbody.appendChild(tr);
+            });
+        }
+
+        async function handleAddUser(e) {
+            e.preventDefault();
+            const name = document.getElementById('newUserName').value.trim();
+            const role = document.getElementById('newUserRole').value.trim();
+            const pin = document.getElementById('newUserPin').value.trim();
+
+            if (!name || !role || !pin) return Swal.fire('Form Belum Lengkap', 'Silakan isi seluruh bidang input.', 'warning');
+
+            const newUserId = 'usr-' + Date.now();
+            const newUserObj = {
+                id: newUserId,
+                name: name,
+                role: role,
+                pin: pin,
+                isSuperAdmin: false
+            };
+
+            userList.push(newUserObj);
+            saveLocalCache();
+
+            if (gasEndpointUrl) {
+                await callGasApi({
+                    action: 'addAdmin',
+                    id: newUserId,
+                    name: name,
+                    role: role,
+                    pin: pin,
+                    isSuperAdmin: false
+                });
+                await syncWithGoogleSheets(false);
+            }
+
+            document.getElementById('formAddUser').reset();
+            renderUserTable();
+            renderAdminUserSelect();
+            Swal.fire('User Ditambahkan', `Pemeriksa ${name} berhasil disimpan ke Google Sheets.`, 'success');
+        }
+
+        function handleDeleteUser(userId) {
+            const target = userList.find(u => u.id === userId);
+            if (!target) return;
+
+            Swal.fire({
+                title: 'Hapus User Pemeriksa?',
+                text: `Hapus ${target.name} dari sistem dan Google Sheets?`,
+                icon: 'warning',
+                showCancelButton: true,
+                confirmButtonColor: '#d33',
+                confirmButtonText: 'Ya, Hapus'
+            }).then(async (result) => {
+                if (result.isConfirmed) {
+                    userList = userList.filter(u => u.id !== userId);
+                    saveLocalCache();
+
+                    if (gasEndpointUrl) {
+                        await callGasApi({ action: 'deleteAdmin', userId: userId });
+                        await syncWithGoogleSheets(false);
+                    }
+
+                    renderUserTable();
+                    renderAdminUserSelect();
+                    Swal.fire('Terhapus', 'User pemeriksa telah dihapus.', 'success');
+                }
+            });
+        }
+
+        async function handleCekStatus(e) {
+            e.preventDefault();
+            const ticketNo = document.getElementById('searchTicketInput').value.trim();
+            
+            if (gasEndpointUrl) {
+                await syncWithGoogleSheets(false);
+            }
+
+            const item = appData.find(x => x.ticket.toLowerCase() === ticketNo.toLowerCase());
+            
+            if (item) {
+                document.getElementById('trackerResultContainer').classList.remove('d-none');
+                document.getElementById('trackTicketNo').textContent = item.ticket;
+                document.getElementById('trackNama').textContent = item.nama;
+                document.getElementById('trackUnitKerja').textContent = item.unitKerja;
+                document.getElementById('trackAdmin').textContent = item.admin !== '-' ? item.admin : 'Belum Ada';
+                document.getElementById('trackLamaPenanganan').textContent = item.lamaPenanganan;
+                document.getElementById('trackCatatanAdmin').textContent = item.catatanAdmin;
+
+                const badge = document.getElementById('trackBadgeStatus');
+                badge.className = `badge badge-status badge-status-${item.status.toLowerCase()}`;
+                badge.textContent = item.status;
+
+                const s1 = document.getElementById('step1');
+                const s2 = document.getElementById('step2');
+                const s3 = document.getElementById('step3');
+
+                s1.className = 'timeline-step completed';
+                document.getElementById('step1Time').textContent = `${item.tanggal} ${item.jam}`;
+
+                if (item.status === 'Diproses') {
+                    s2.className = 'timeline-step active';
+                    s3.className = 'timeline-step';
+                    document.getElementById('step2Time').textContent = `${item.tanggalMulai} ${item.jamMulai}`;
+                    document.getElementById('step3Time').textContent = '-';
+                    document.getElementById('trackMessageText').textContent = "Pengaduan Anda sedang dalam penanganan tim kepegawaian.";
+                } else if (item.status === 'Selesai' || item.status === 'Ditolak') {
+                    s2.className = 'timeline-step completed';
+                    s3.className = 'timeline-step completed';
+                    document.getElementById('step2Time').textContent = item.tanggalMulai;
+                    document.getElementById('step3Time').textContent = item.tanggalSelesai;
+                    document.getElementById('trackMessageText').textContent = `Pengaduan telah ${item.status.toUpperCase()} ditangani. Silakan cek catatan admin di bawah.`;
+                } else {
+                    s2.className = 'timeline-step';
+                    s3.className = 'timeline-step';
+                    document.getElementById('step2Time').textContent = '-';
+                    document.getElementById('step3Time').textContent = '-';
+                    document.getElementById('trackMessageText').textContent = "Pengaduan Anda telah diterima dan sedang menunggu penanganan admin.";
+                }
+
+            } else {
+                document.getElementById('trackerResultContainer').classList.add('d-none');
+                Swal.fire('Tidak Ditemukan', 'Nomor tiket tidak terdaftar di sistem Google Sheets.', 'error');
+            }
+        }
+
+        function openSupportDocument(source) {
+            let docUrl = "";
+            let docName = "";
+
+            if (source === 'modal' && activeTicketForAction) {
+                docUrl = activeTicketForAction.dokumenUrl || activeTicketForAction.fileBase64;
+                docName = activeTicketForAction.dokumen;
+            } else {
+                const currentTicketNo = document.getElementById('receiptTicket').textContent;
+                const found = appData.find(x => x.ticket === currentTicketNo);
+                if (found) {
+                    docUrl = found.dokumenUrl || found.fileBase64;
+                    docName = found.dokumen;
+                }
+            }
+
+            if (docUrl && docUrl.startsWith('http')) {
+                window.open(docUrl, '_blank');
+            } else if (docUrl && docUrl.startsWith('data:')) {
+                const win = window.open();
+                win.document.write(`<iframe src="${docUrl}" frameborder="0" style="border:0; top:0px; left:0px; bottom:0px; right:0px; width:100%; height:100%;" allowfullscreen></iframe>`);
+            } else {
+                Swal.fire('Dokumen Tidak Ditemukan', 'Lampiran dokumen tidak tersedia atau URL tidak valid.', 'warning');
+            }
+        }
+
+        function exportDataToCSV() {
+            if (appData.length === 0) return Swal.fire('Data Kosong', 'Tidak ada data pengaduan untuk diexport.', 'info');
+
+            let csv = "Nomor Tiket,Nama Pelapor,NIP,Unit Kerja,No HP,Email,Permasalahan,Tanggal,Jam,Status,Catatan Admin,Admin PJ\n";
+            appData.forEach(row => {
+                const clean = str => `"${String(str || '').replace(/"/g, '""')}"`;
+                csv += [
+                    clean(row.ticket),
+                    clean(row.nama),
+                    clean("'" + row.nip),
+                    clean(row.unitKerja),
+                    clean("'" + row.noHp),
+                    clean(row.email),
+                    clean(row.permasalahan),
+                    clean(row.tanggal),
+                    clean(row.jam),
+                    clean(row.status),
+                    clean(row.catatanAdmin),
+                    clean(row.admin)
+                ].join(",") + "\n";
+            });
+
+            const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
+            const link = document.createElement("a");
+            const url = URL.createObjectURL(blob);
+            link.setAttribute("href", url);
+            link.setAttribute("download", `Data_Pengaduan_ASN_${formatDateWIB(new Date())}.csv`);
+            document.body.appendChild(link);
+            link.click();
+            document.body.removeChild(link);
+        }
+
+        function saveGasEndpoint() {
+            gasEndpointUrl = document.getElementById('gasEndpointUrlInput').value.trim() || DEFAULT_GAS_ENDPOINT;
+            localStorage.setItem(GAS_ENDPOINT_KEY, gasEndpointUrl);
+            Swal.fire('Tersimpan', 'Endpoint Google Apps Script berhasil diperbarui.', 'success');
+            syncWithGoogleSheets(true);
+        }
+
+        async function testGasEndpoint() {
+            const url = document.getElementById('gasEndpointUrlInput').value.trim() || DEFAULT_GAS_ENDPOINT;
+            if (!url) return Swal.fire('URL Belum Diatur', 'Silakan masukkan Web App URL Apps Script Anda.', 'warning');
+
+            Swal.fire({
+                title: 'Menguji Koneksi Database...',
+                text: 'Menghubungkan ke Google Sheets & membuat tabel otomatis...',
+                allowOutsideClick: false,
+                didOpen: () => { Swal.showLoading(); }
+            });
+
+            try {
+                const response = await fetch(`${url}?action=init`);
+                const result = await response.json();
+
+                if (result && result.success) {
+                    gasEndpointUrl = url;
+                    localStorage.setItem(GAS_ENDPOINT_KEY, url);
+                    await syncWithGoogleSheets(false);
+
+                    Swal.fire({
+                        icon: 'success',
+                        title: 'Koneksi & Inisialisasi Berhasil!',
+                        html: `
+                            <p class="mb-2">${result.message}</p>
+                            <div class="text-start bg-light p-3 rounded border small font-monospace">
+                                <strong>Spreadsheet:</strong> ${result.spreadsheetName || 'Terhubung'}<br>
+                                <strong>Tabel Dibuat:</strong> ${result.sheetsCreated ? result.sheetsCreated.join(', ') : 'PENGADUAN, ADMINS'}
+                            </div>
+                        `,
+                        confirmButtonText: 'Mantap!'
+                    });
+                } else {
+                    Swal.fire({
+                        icon: 'error',
+                        title: 'Koneksi Gagal',
+                        text: result.message || 'Respons dari Apps Script tidak sesuai.',
+                    });
+                }
+            } catch (err) {
+                Swal.fire({
+                    icon: 'error',
+                    title: 'Gagal Terhubung',
+                    html: `
+                        <p class="text-danger small mb-2">Terjadi kesalahan jaringan / izin akses.</p>
+                        <div class="text-start bg-light p-2 rounded border small">
+                            Pastikan saat Deploy pilih <strong>Who has access: Anyone (Siapa saja)</strong>.
+                        </div>
+                    `
+                });
+            }
+        }
+
+        function downloadReceiptPDF() {
+            const element = document.getElementById('printableReceipt');
+            const opt = {
+                margin:       0.5,
+                filename:     `Bukti_Pengaduan_${document.getElementById('receiptTicket').textContent}.pdf`,
+                image:        { type: 'jpeg', quality: 0.98 },
+                html2canvas:  { scale: 2 },
+                jsPDF:        { unit: 'in', format: 'letter', orientation: 'portrait' }
+            };
+            html2pdf().set(opt).from(element).save();
+        }
+
+        function trackCurrentTicketFromReceipt() {
+            switchTab('status-tab');
+            document.getElementById('searchTicketInput').value = document.getElementById('receiptTicket').textContent;
+        }
+    </script>
+</body>
+</html>
